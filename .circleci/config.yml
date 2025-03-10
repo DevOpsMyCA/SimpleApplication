@@ -1,0 +1,49 @@
+version: 2.1
+
+workflows:
+  version: 2
+  build:
+    jobs:
+      - build:
+          filters:
+            branches:
+              only:
+                - main
+      - deploy:
+          filters:
+            branches:
+              only:
+                - main
+          requires:
+            - build
+
+jobs:
+  build:
+    working_directory: ~/SimpleApplication
+    docker:
+      - image: cimg/node:20.17.0
+    steps:
+      - checkout
+      - run:
+          name: update-npm
+          command: 'sudo npm install -g npm@latest'
+      - restore_cache:
+          key: dependency-cache-{{ checksum "package-lock.json" }}
+      - run:
+          name: install-npm-wee
+          command: npm install
+      - save_cache:
+          key: dependency-cache-{{ checksum "package-lock.json" }}
+          paths:
+            - ./node_modules
+
+  deploy:
+    docker:
+      - image: cimg/node:20.17.0
+    steps:
+      - run:
+          name: Clone Repository
+          command: ssh -o StrictHostKeyChecking=no ubuntu@$EC2_PUBLIC_DNS "rm -rf SimpleApplication && git clone https://github.com/DevOpsMyCA/SimpleApplication/"
+      - run:
+          name: Deploy Application
+          command: ssh -o StrictHostKeyChecking=no ubuntu@$EC2_PUBLIC_DNS "cd SimpleApplication && source deploy.sh"
