@@ -21,7 +21,7 @@ jobs:
   build:
     working_directory: ~/SimpleApplication
     docker:
-      - image: cimg/node:20.17.0
+      - image: circleci/node:20.17.0
     steps:
       - checkout
       - run:
@@ -39,11 +39,9 @@ jobs:
 
   deploy:
     docker:
-      - image: cimg/node:20.17.0
+      - image: circleci/node:20.17.0
     steps:
       - run:
-          name: Clone Repository
-          command: ssh -o StrictHostKeyChecking=no ubuntu@$EC2_PUBLIC_DNS "rm -rf SimpleApplication && git clone https://github.com/DevOpsMyCA/SimpleApplication/"
-      - run:
-          name: Deploy Application
-          command: ssh -o StrictHostKeyChecking=no ubuntu@$EC2_PUBLIC_DNS "cd SimpleApplication && source deploy.sh"
+          name: Deploy-Application
+          command: |
+            ssh -o StrictHostKeyChecking=no ubuntu@$EC2_PUBLIC_DNS "rm -rf SimpleApplication/git clone https://github.com/DevOpsMyCA/SimpleApplication; source SimpleApplication/deploy.sh"
