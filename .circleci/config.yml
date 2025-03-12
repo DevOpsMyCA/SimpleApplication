@@ -36,7 +36,7 @@ jobs:
           paths:
             - ./node_modules
 
-  deploy:
+ deploy:
     docker:
       - image: cimg/node:20.17.0
     steps:
@@ -47,8 +47,6 @@ jobs:
               rm -rf SimpleApplication
               git clone https://github.com/DevOpsMyCA/SimpleApplication.git
               cd SimpleApplication
-              npm install
-              pm2 stop example_app || true
-              pm2 start ./bin/www --name example_app
-              pm2 save
+              chmod +x deploy.sh
+              ./deploy.sh
             EOF
