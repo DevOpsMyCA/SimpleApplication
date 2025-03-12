@@ -1,6 +1,8 @@
 var app = require('../app');
 var debug = require('debug')('phishsense:server');
 var http = require('http');
+var https = require('https');
+var fs = require('fs');
 
 function normalizePort(val) {
   var port = parseInt(val, 10);
@@ -32,10 +34,24 @@ function onListening() {
   debug('Listening on ' + bind);
 }
 
-var port = normalizePort(process.env.PORT || '8080');
+// HTTPS on port 443
+var port = normalizePort(process.env.PORT || '443');
 app.set('port', port);
 
-var server = http.createServer(app);
+var sslOptions = {
+  key: fs.readFileSync('/etc/letsencrypt/live/54.234.188.62.nip.io/privkey.pem'),
+  cert: fs.readFileSync('/etc/letsencrypt/live/54.234.188.62.nip.io/fullchain.pem')
+};
+
+var server = https.createServer(sslOptions, app);
 server.listen(port);
 server.on('error', onError);
 server.on('listening', onListening);
+
+// HTTP redirect to HTTPS on port 80
+var httpPort = 80;
+var httpServer = http.createServer(function (req, res) {
+  res.writeHead(301, { "Location": "https://" + req.headers['host'] + req.url });
+  res.end();
+});
+httpServer.listen(httpPort);
