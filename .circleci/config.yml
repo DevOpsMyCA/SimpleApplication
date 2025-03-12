@@ -44,7 +44,7 @@ jobs:
             ssh -o StrictHostKeyChecking=no $EC2_USERNAME@$EC2_PUBLIC_DNS /bin/bash -c '
               sudo apt update
               sudo apt install -y certbot
-              sudo certbot certonly --standalone -d 54.234.188.62.nip.io --non-interactive --agree-tos --email x16134672@student.ncirl.ie || true
+              sudo certbot certonly --standalone -d 54.234.188.62.nip.io --non-interactive --agree-tos --email your-email@example.com || true
               sudo chmod 644 /etc/letsencrypt/live/54.234.188.62.nip.io/privkey.pem || true
               sudo chmod 644 /etc/letsencrypt/live/54.234.188.62.nip.io/fullchain.pem || true
               rm -rf SimpleApplication
