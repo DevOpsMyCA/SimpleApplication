@@ -55,8 +55,7 @@ jobs:
               cd SimpleApplication
               npm install
               npm install https
-              sudo setcap "cap_net_bind_service=+ep" $(which node)
-              sudo pm2 stop example_app || true
-              sudo pm2 start ./bin/www --name example_app
+              sudo pm2 kill  # Clear all PM2 instances
+              sudo pm2 start ./bin/www --name example_app --instances 1  # Single instance
               sudo pm2 save
             '
