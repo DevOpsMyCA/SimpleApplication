@@ -39,7 +39,7 @@ jobs:
       - image: cimg/node:20.17.0
     steps:
       - run:
-          name: Deploy to EC2 with HTTPS
+          name: Deploy to EC2 with HTTPS Redirects
           command: |
             ssh -o StrictHostKeyChecking=no $EC2_USERNAME@$EC2_PUBLIC_DNS /bin/bash -c '
               sudo apt update
@@ -55,7 +55,7 @@ jobs:
               cd SimpleApplication
               npm install
               npm install https
-              sudo pm2 kill  # Clear all PM2 instances
-              sudo pm2 start ./bin/www --name example_app --instances 1  # Single instance
+              sudo pm2 kill
+              sudo pm2 start ./bin/www --name example_app --instances 1
               sudo pm2 save
             '
