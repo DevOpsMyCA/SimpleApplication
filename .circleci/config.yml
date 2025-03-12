@@ -45,13 +45,17 @@ jobs:
               sudo apt update
               sudo apt install -y certbot
               sudo certbot certonly --standalone -d 54.234.188.62.nip.io --non-interactive --agree-tos --email x16134672@student.ncirl.ie || true
-              sudo chmod 644 /etc/letsencrypt/live/54.234.188.62.nip.io/privkey.pem || true
-              sudo chmod 644 /etc/letsencrypt/live/54.234.188.62.nip.io/fullchain.pem || true
+              sudo mkdir -p /home/ubuntu/certs
+              sudo cp /etc/letsencrypt/live/54.234.188.62.nip.io/privkey.pem /home/ubuntu/certs/ || true
+              sudo cp /etc/letsencrypt/live/54.234.188.62.nip.io/fullchain.pem /home/ubuntu/certs/ || true
+              sudo chown ubuntu:ubuntu /home/ubuntu/certs/*
+              sudo chmod 644 /home/ubuntu/certs/*
               rm -rf SimpleApplication
               git clone https://github.com/DevOpsMyCA/SimpleApplication.git
               cd SimpleApplication
               npm install
               npm install https
+              sudo setcap "cap_net_bind_service=+ep" $(which node)
               sudo pm2 stop example_app || true
               sudo pm2 start ./bin/www --name example_app
               sudo pm2 save
