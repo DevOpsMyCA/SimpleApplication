@@ -1,21 +1,18 @@
 version: 2.1
 
 workflows:
-  version: 2
-  build:
+  build-and-deploy:
     jobs:
       - build:
           filters:
             branches:
-              only:
-                - main
+              only: main
       - deploy:
-          filters:
-            branches:
-              only:
-                - main
           requires:
             - build
+          filters:
+            branches:
+              only: main
 
 jobs:
   build:
@@ -24,14 +21,10 @@ jobs:
       - image: cimg/node:20.17.0
     steps:
       - checkout
-      - run:
-          name: update-npm
-          command: 'sudo npm install -g npm@latest'
+      - run: sudo npm install -g npm@latest
       - restore_cache:
           key: dependency-cache-{{ checksum "package-lock.json" }}
-      - run:
-          name: install-npm-wee
-          command: npm install
+      - run: npm install
       - save_cache:
           key: dependency-cache-{{ checksum "package-lock.json" }}
           paths:
@@ -42,8 +35,18 @@ jobs:
       - image: cimg/node:20.17.0
     steps:
       - run:
-          name: Clone Repository
-          command: ssh -o StrictHostKeyChecking=no ubuntu@$EC2_PUBLIC_DNS "rm -rf SimpleApplication && git clone https://github.com/DevOpsMyCA/SimpleApplication/"
-      - run:
-          name: Deploy Application
-          command: ssh -o StrictHostKeyChecking=no ubuntu@$EC2_PUBLIC_DNS "cd SimpleApplication && source deploy.sh"
+          name: Deploy to EC2 with HTTPS
+          command: |
+            ssh -o StrictHostKeyChecking=no $EC2_USERNAME@$EC2_PUBLIC_DNS << 'EOF'
+              sudo apt update
+              sudo apt install -y certbot
+              sudo certbot certonly --standalone -d 54.234.188.62.nip.io --non-interactive --agree-tos --email your-email@example.com || true
+              rm -rf SimpleApplication
+              git clone https://github.com/DevOpsMyCA/SimpleApplication.git
+              cd SimpleApplication
+              npm install
+              npm install https
+              sudo pm2 stop example_app || true
+              sudo pm2 start ./bin/www --name example_app
+              sudo pm2 save
+            EOF
