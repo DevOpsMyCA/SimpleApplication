@@ -1,8 +1,7 @@
 version: 2.1
 
 workflows:
-  version: 2
-  build:
+  build-and-deploy:
     jobs:
       - build:
           filters:
@@ -10,12 +9,12 @@ workflows:
               only:
                 - main
       - deploy:
+          requires:
+            - build
           filters:
             branches:
               only:
                 - main
-          requires:
-            - build
 
 jobs:
   build:
@@ -25,12 +24,12 @@ jobs:
     steps:
       - checkout
       - run:
-          name: update-npm
-          command: 'sudo npm install -g npm@latest'
+          name: Update npm
+          command: sudo npm install -g npm@latest
       - restore_cache:
           key: dependency-cache-{{ checksum "package-lock.json" }}
       - run:
-          name: install-npm-wee
+          name: Install Dependencies
           command: npm install
       - save_cache:
           key: dependency-cache-{{ checksum "package-lock.json" }}
@@ -42,12 +41,14 @@ jobs:
       - image: cimg/node:20.17.0
     steps:
       - run:
-          name: Clone Repository
-          command: ssh -o StrictHostKeyChecking=no ubuntu@$EC2_PUBLIC_DNS "rm -rf SimpleApplication && git clone https://github.com/DevOpsMyCA/SimpleApplication/"
-      - run:
-          name: Deploy Application
-          command: ssh -o StrictHostKeyChecking=no ubuntu@$EC2_PUBLIC_DNS "cd SimpleApplication && source deploy.sh"
-      - run:
-          name: Deploy Application with Variables
+          name: Deploy to EC2
           command: |
-            ssh -o StrictHostKeyChecking=no $EC2_USERNAME@$EC2_PUBLIC_DNS "export SERVER=\"$SERVER\"; export PRIVATE_KEY=\"$PRIVATE_KEY\"; rm -rf SimpleApplication/; git clone https://github.com/DevOpsMyCA/SimpleApplication.git; source SimpleApplication/deploy.sh"
+            ssh -o StrictHostKeyChecking=no $EC2_USERNAME@$EC2_PUBLIC_DNS << 'EOF'
+              rm -rf SimpleApplication
+              git clone https://github.com/DevOpsMyCA/SimpleApplication.git
+              cd SimpleApplication
+              npm install
+              pm2 stop example_app || true
+              pm2 start ./bin/www --name example_app
+              pm2 save
+            EOF
